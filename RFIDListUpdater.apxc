@@ -11,7 +11,7 @@ global class RFIDListUpdater {
         
         String response = '';
         for(Contact tagEntry : currentTags) {
-            response += tagEntry.Tag_ID__c + '\n';
+            response += tagEntry.Tag_ID__c + '|';
         }
         return response;
     }
