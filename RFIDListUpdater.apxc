@@ -6,13 +6,16 @@ global class RFIDListUpdater {
         RestResponse res = RestContext.response;
         res.addHeader('Content-Type', 'text/plain');
 
-        List<Contact> currentTags = [SELECT Tag_ID__c FROM Contact
-                WHERE Current_Member__c = 'Yes' AND Tag_ID__c != null];  
+        List<Contact> currentTags = [SELECT Tag_ID__c FROM Contact 
+                                     WHERE Current_Member__c = 'Yes' AND Tag_ID__c != null];  
         
         String response = '';
         for(Contact tagEntry : currentTags) {
             response += tagEntry.Tag_ID__c + '|';
         }
+        // Trim the trailing delimiter
+        if(response.length() > 0)
+            response = response.substring(0, response.length() - 1);
         return response;
     }
 }
