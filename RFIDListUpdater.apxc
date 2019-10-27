@@ -1,20 +1,18 @@
-public class RFIDListUpdater {
-    Contact[] accts;
-    
-    public RFIDListUpdater() {
-        accts = [SELECT Tag_ID__c FROM Contact
-                WHERE Current_Member__c = 'Yes' AND Tag_ID__c != null];
-    }
-    
-    @InvocableMethod(label = 'TestGrab') 
-    public static List<String> TestGrab() {
-        RFIDListUpdater up = new RFIDListUpdater();
-        List<String> ids = new List<String>();
+@RestResource(urlMapping='/rfid/tags')
+global class RFIDListUpdater {
         
-        for(Integer i = 0; i < up.accts.size(); i++) {
-            ids.add(up.accts.get(i).Tag_ID__c);
+    @HttpGet 
+    global static String getTagList() {
+        RestResponse res = RestContext.response;
+        res.addHeader('Content-Type', 'text/plain');
+
+        List<Contact> currentTags = [SELECT Tag_ID__c FROM Contact
+                WHERE Current_Member__c = 'Yes' AND Tag_ID__c != null];  
+        
+        String response = '';
+        for(Contact tagEntry : currentTags) {
+            response += tagEntry.Tag_ID__c + '\n';
         }
-        
-        return ids;
+        return response;
     }
 }

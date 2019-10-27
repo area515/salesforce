@@ -1,0 +1,41 @@
+@isTest
+private class RFIDListUpdaterTest {
+    static testMethod void onlyReturnCurrentRfidTags() {
+        RestContext.response = new RestResponse();
+        
+		addContact('validTag', 'Yes');
+        addContact('expiredTag', 'No');
+        
+        String result = RFIDListUpdater.getTagList();
+        
+        System.assertEquals('validTag\n', result);
+    }
+    
+    static testMethod void returnNewlineDelimitedTags() {
+        RestContext.response = new RestResponse();
+        
+		addContact('validTag1', 'Yes');
+        addContact('validTag2', 'Yes');
+        
+        String result = RFIDListUpdater.getTagList();
+        
+        System.assertEquals('validTag1\nvalidTag2\n', result);
+    }
+    
+    static testMethod void addTextPlainContentTypeToResponse() {
+        RestContext.response = new RestResponse();
+        
+        addContact('', 'Yes');
+        RFIDListUpdater.getTagList();
+        
+        String contentType = RestContext.response.headers.get('Content-Type');
+        
+        System.assertEquals('text/plain', contentType);
+    }
+    
+    private static void addContact(String tag, String isCurrentMember) {
+        Contact currentMember = new Contact(Tag_ID__c=tag, Current_Member__c=isCurrentMember,
+                                           LastName='RequiredField');
+        insert currentMember;
+    }
+}
