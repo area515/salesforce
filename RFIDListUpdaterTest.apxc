@@ -41,6 +41,17 @@ private class RFIDListUpdaterTest {
         System.assertEquals('', response);
     }
     
+    static testmethod void shouldStripEmptyRfidTagValues() {
+        RestContext.response = new RestResponse();
+        
+        addContact('validTag1', 'Yes');
+        addContact('', 'Yes');
+        addContact('validTag2', 'Yes');
+        String response = RFIDListUpdater.getTagList();
+        
+        System.assertEquals('validTag1|validTag2', response);
+    }
+    
     private static void addContact(String tag, String isCurrentMember) {
         Contact currentMember = new Contact(Tag_ID__c=tag, Current_Member__c=isCurrentMember,
                                            LastName='RequiredField');
