@@ -1,0 +1,61 @@
+@isTest
+private class PaypalEventHandlerTest {
+    // https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNandPDTVariables/
+     
+    static testMethod void shouldParseDateTimeFromUtcIso() {
+        RestRequest restRequest = createRequest();
+        restRequest.params.put('payment_date', '2019-10-27T15:59:30.00Z');
+        DateTime parsedDate = DateTime.newInstanceGmt(2019, 10, 27, 15, 59, 30);
+        PaypalEventHandler.handle();
+        
+        Paypal_Transaction__c createdTransaction = [SELECT Date_Time__c FROM Paypal_Transaction__c 
+                                              WHERE Transaction_Id__c=:'unique_test_object'];
+        System.assertEquals(parsedDate, createdTransaction.Date_Time__c);
+    }
+    
+    static testMethod void shouldSetNetAmountToGrossAmountMinusFees() {
+        RestRequest restRequest = createRequest();
+        restRequest.params.put('mc_gross', '12.34');
+        restRequest.params.put('mc_fee', '1.23');
+        
+        PaypalEventHandler.handle();
+        Paypal_Transaction__c createdTransaction = [SELECT Net_Amount__c, Gross_Amount__c, Fee_Amount__c FROM Paypal_Transaction__c 
+                                              WHERE Transaction_Id__c=:'unique_test_object'];
+        
+        System.assertEquals(11.11, createdTransaction.Net_Amount__c);
+        System.assertEquals(12.34, createdTransaction.Gross_Amount__c);
+        System.assertEquals(1.23, createdTransaction.Fee_Amount__c);
+    }
+    
+    static testMethod void shouldSetNullInvoiceWhenNotProvidedInRequest() {
+        RestRequest restRequest = createRequest();
+        
+        PaypalEventHandler.handle();
+        Paypal_Transaction__c createdTransaction = [SELECT Invoice_Id__c FROM Paypal_Transaction__c 
+                                              WHERE Transaction_Id__c=:'unique_test_object'];
+        
+        System.assertEquals(null, createdTransaction.Invoice_Id__c);
+    }
+    
+    static testMethod void shouldSetNameUsingLastAndFirst() {
+        RestRequest restRequest = createRequest();
+        restRequest.addParameter('first_name', 'Tim');
+        restRequest.addParameter('last_name', 'AlsoTim');
+        
+        PaypalEventHandler.handle();
+        Paypal_Transaction__c createdTransaction = [SELECT Name__c FROM Paypal_Transaction__c 
+                                              WHERE Transaction_Id__c=:'unique_test_object'];
+        
+        System.assertEquals('AlsoTim, Tim', createdTransaction.Name__c);
+    }
+    
+    private static RestRequest createRequest() {
+        RestRequest restRequest = new RestRequest();
+        restRequest.params.put('txn_id', 'unique_test_object');
+        restRequest.params.put('payment_date', '2019-10-27T15:59:30.00Z');
+        restRequest.params.put('mc_gross', '1.23');
+        restRequest.params.put('mc_fee', '0.23');
+        RestContext.request = restRequest;
+        return restRequest;
+    }
+}

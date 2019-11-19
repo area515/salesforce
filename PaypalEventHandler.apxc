@@ -1,0 +1,50 @@
+@RestResource(urlMapping='/paypalEvent')
+global class PaypalEventHandler {
+    
+    // For Paypal variable definitions, see https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNandPDTVariables/
+
+    @HttpPost
+    global static void handle() {
+        RestRequest request = RestContext.request;
+        
+        Decimal grossAmount = Decimal.valueOf(request.params.get('mc_gross'));
+        Decimal feeAmount = Decimal.valueOf(request.params.get('mc_fee'));
+        Decimal netAmount = grossAmount - feeAmount;
+        
+        DateTime transactionDate = parseIsoUtc(request.params.get('payment_date'));
+        
+        Paypal_Transaction__c transactionRecord = new Paypal_Transaction__c(
+        	From_Email_Address__c=request.params.get('payer_email'),
+            To_Email_Address__c=request.params.get('receiver_email'),
+            Name__c=request.params.get('last_name') + ', ' + request.params.get('first_name'),
+        	Transaction_Type__c=request.params.get('txn_type'),
+            Payment_Status__c=request.params.get('payment_status'),
+        	Transaction_Id__c=request.params.get('txn_id'),
+            Invoice_Id__c=request.params.get('invoice'),
+            //Type_Option_1__c=request.params.get('option_name1'),
+            //SubType_Option_1__c=request.params.get('option_selection1'),
+            Gross_Amount__c=grossAmount,
+        	Net_Amount__c=netAmount,
+            Fee_Amount__c=feeAmount,
+            Date_Time__c=transactionDate
+        );
+        insert transactionRecord;
+    }
+    
+    private static DateTime parseIsoUtc(String dateTimeValue) {
+        // Paypal sends dateTime in format 'HH:MM:SS Mmm DD, YYYY PDT'. See "payment_date" in https://developer.paypal.com/webapps/developer/docs/classic/ipn/integration-guide/IPNandPDTVariables/
+        // Here, DateTime.parse(string) and DateTime.valueOf(string) are inflexible. 
+        // The IPN handler that signs the request and forwards it here will reformat the date into UTC ISO.
+        // We assume here a format of YYYY-MM-DDTHH:MM:SSZ, where the datetime string has already been converted to UTC/GMT.
+        // Future me: If you learn a better way to parse dateTime in SalesForce, please improve this. 
+        // 		Be careful: Test any changes thoroughly, and watch for inadvertent UTC/CDT/CST changes.
+        Integer year = Integer.valueOf(dateTimeValue.substring(0, 4));
+        Integer month = Integer.valueOf(dateTimeValue.substring(5, 7));
+        Integer day = Integer.valueOf(dateTimeValue.substring(8, 10));
+        Integer hour = Integer.valueOf(dateTimeValue.substring(11, 13));
+		Integer minute = Integer.valueOf(dateTimeValue.substring(14, 16));
+		Integer second = Integer.valueOf(dateTimeValue.substring(17,19));
+        
+        return DateTime.newInstanceGmt(year, month, day, hour, minute, second);
+    }
+}

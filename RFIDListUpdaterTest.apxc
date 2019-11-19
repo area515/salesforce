@@ -8,7 +8,7 @@ private class RFIDListUpdaterTest {
         
         String result = RFIDListUpdater.getTagList();
         
-        System.assertEquals('validTag', result);
+        System.assertEquals('validTag|', result);
     }
     
     static testMethod void returnPipeDelimitedTags() {
@@ -19,7 +19,7 @@ private class RFIDListUpdaterTest {
         
         String result = RFIDListUpdater.getTagList();
         
-        System.assertEquals('validTag1|validTag2', result);
+        System.assertEquals('validTag1|validTag2|', result);
     }
     
     static testMethod void addTextPlainContentTypeToResponse() {
@@ -49,7 +49,7 @@ private class RFIDListUpdaterTest {
         addContact('validTag2', 'Yes');
         String response = RFIDListUpdater.getTagList();
         
-        System.assertEquals('validTag1|validTag2', response);
+        System.assertEquals('validTag1|validTag2|', response);
     }
     
     private static void addContact(String tag, String isCurrentMember) {

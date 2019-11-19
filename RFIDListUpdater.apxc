@@ -13,9 +13,7 @@ global class RFIDListUpdater {
         for(Contact tagEntry : currentTags) {
             response += tagEntry.Tag_ID__c + '|';
         }
-        // Trim the trailing delimiter
-        if(response.length() > 0)
-            response = response.substring(0, response.length() - 1);
+
         return response;
     }
 }
